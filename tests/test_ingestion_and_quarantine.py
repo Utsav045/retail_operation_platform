@@ -74,3 +74,53 @@ async def test_ingestion_idempotency_and_quarantine(tmp_path):
         # Verify original file was NOT deleted
         assert corrupt_file.exists()
         assert xml_copy.exists()
+
+
+@pytest.mark.asyncio
+async def test_transaction_level_deduplication(tmp_path):
+    """Verify that if two different files contain overlapping transactions, duplicates are skipped at transaction level."""
+    test_outbox = tmp_path / "outbox2"
+    test_outbox.mkdir()
+
+    # Batch 1 with transaction 9901 and 9902
+    xml_batch1 = """<?xml version="1.0" encoding="UTF-8"?>
+<TransactionLog storeId="BL01" businessDate="2026-10-25" batchSeq="101">
+    <Transaction seq="9901" type="SALE" device="R1" staff="201" timestamp="2026-10-25T09:00:00">
+        <Line lineNo="1" item="200000001018" desc="Coffee" qty="1" unitPrice="3.00" amount="3.00"/>
+        <Tender seq="1" type="CASH" amount="3.00"/>
+    </Transaction>
+    <Transaction seq="9902" type="SALE" device="R1" staff="201" timestamp="2026-10-25T09:05:00">
+        <Line lineNo="1" item="200000001018" desc="Coffee" qty="1" unitPrice="3.00" amount="3.00"/>
+        <Tender seq="1" type="CASH" amount="3.00"/>
+    </Transaction>
+</TransactionLog>"""
+    f1 = test_outbox / "TLOG_BL01_000101.xml"
+    f1.write_text(xml_batch1, encoding="utf-8")
+
+    # Batch 2 with transaction 9902 (duplicate) and 9903 (new)
+    xml_batch2 = """<?xml version="1.0" encoding="UTF-8"?>
+<TransactionLog storeId="BL01" businessDate="2026-10-25" batchSeq="102">
+    <Transaction seq="9902" type="SALE" device="R1" staff="201" timestamp="2026-10-25T09:05:00">
+        <Line lineNo="1" item="200000001018" desc="Coffee" qty="1" unitPrice="3.00" amount="3.00"/>
+        <Tender seq="1" type="CASH" amount="3.00"/>
+    </Transaction>
+    <Transaction seq="9903" type="SALE" device="R1" staff="201" timestamp="2026-10-25T09:10:00">
+        <Line lineNo="1" item="200000001018" desc="Coffee" qty="1" unitPrice="3.00" amount="3.00"/>
+        <Tender seq="1" type="CASH" amount="3.00"/>
+    </Transaction>
+</TransactionLog>"""
+    f2 = test_outbox / "TLOG_BL01_000102.xml"
+    f2.write_text(xml_batch2, encoding="utf-8")
+
+    async with async_session_factory() as session:
+        service = IngestionService(session)
+        res1 = await service.process_file(f1)
+        assert res1["status"] == "PROCESSED"
+        assert res1["accepted"] == 2
+        assert res1["skipped"] == 0
+
+        res2 = await service.process_file(f2)
+        assert res2["status"] == "PROCESSED"
+        assert res2["accepted"] == 1
+        assert res2["skipped"] == 1  # 9902 was safely skipped
+

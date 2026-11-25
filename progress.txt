@@ -49,8 +49,15 @@ TASK BACKLOG (RALPH LOOP)
     - Verified: pytest test_simulator.py passed 100%.
 
 [x] Task 1.6: Run Full Test Suite & Verify Idempotency
-    - Verified all 6 test suites across database, parsers, master loader, ingestion/quarantine, and simulator.
-    - Verified 100% test pass rate with zero errors.
+    - Verified all 11 test suites across database, decimal precision, parsers, master loader, ingestion/quarantine, transaction deduplication, and simulator.
+    - Verified 100% test pass rate with zero errors in 1.74s.
+
+[x] Task 1.7: Master Quality Assurance Test Matrix in Excel
+    - Created single master workbook: test_scenarios/retail_operations_test_matrix.xlsx
+    - Built 'Summary & Overview' sheet with Executive QA Dashboard and project roadmap.
+    - Built 'Phase 1 - Ingestion & Hub Sim' sheet with 30 granular business logic test scenarios (TC-P1-001 to TC-P1-030).
+    - Verified all 30 test scenarios marked PASSED and backed by automated pytest tests.
+
 
 ================================================================================
 PHASE 1 COMPLETE: DATA MODELS, PARSERS, INGESTION ENGINE & SIMULATOR VERIFIED
