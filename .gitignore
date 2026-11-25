@@ -1,0 +1,25 @@
+# Database files (NEVER commit or push databases to the repo)
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+retail_ops.db
+
+# Python & virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Runtime simulator & test artifacts
+runtime_data/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local agent tools & raw files (never committed)
+agent_files/
+Full Stack_Hiring_Task_Zygeist/

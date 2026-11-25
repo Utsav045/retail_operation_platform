@@ -1,0 +1,45 @@
+# CodeRabbit Configuration
+# Language & Tone
+language: "en-US"
+tone_instructions: "Be precise, critical, and constructive. Focus on correctness, edge cases, data integrity, and security."
+
+# Reviews configuration
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+      - "master"
+      - "develop"
+
+# Path filters
+path_filters:
+  - "!**/*.min.*"
+  - "!**/dist/**"
+  - "!**/build/**"
+  - "!**/node_modules/**"
+  - "!**/.git/**"
+
+# Inspection rules
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    enabled: true
+
+# Custom instructions
+custom_instructions: |
+  1. Financial & Business Data Integrity: Ensure all monetary values use exact decimal arithmetic (never floating point).
+  2. Data Validation: Validate external formats (XML, JSON, CSV), timestamps, and schemas defensively. Flag malformed records without crashing.
+  3. Spec Compliance: Cross-check logic against GSD specs (.gsd/SPEC.md, README.md, exchange-format.md).
+  4. Testing & Reliability: Verify that error cases, corrupt inputs, and race conditions are guarded by automated tests.
+  5. Security: Never allow hardcoded credentials, API keys, or unsafe deserialization.

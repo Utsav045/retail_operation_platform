@@ -1,0 +1,76 @@
+# Ralph Loop Task Progress Tracker
+# Project: Brightleaf Market — Full Stack AI Retail Operations
+# Workflow: GSD + Roo Code + Ralph Loop + CodeRabbit
+
+# Format:
+# [x] = Completed (with commit & verification)
+# [>] = In Progress (currently active task)
+# [ ] = Pending
+
+================================================================================
+CURRENT STATE
+================================================================================
+Active Phase: Phase 1 — Project Discovery & Specification
+Status: In Progress
+Current Loop: 1
+
+================================================================================
+TASK BACKLOG (RALPH LOOP)
+================================================================================
+
+[x] Task 0.1: Initialize 4-tool engineering stack (GSD, Roo Code, Ralph Loop, CodeRabbit)
+    - Verified: Global GEMINI.md, .clinerules, .coderabbit.yaml, progress.txt created.
+
+[x] Task 1.1: Environment & Dependency Setup
+    - Setup Python 3.12 virtualenv, installed FastAPI, SQLAlchemy 2.0 (asyncio + greenlet), lxml, watchdog, pytest.
+    - Verified: pytest test_database.py passes with 100%.
+
+[x] Task 1.2: Relational Schema & Master Data Loader
+    - Built models for Stores, Devices, Staff, Departments, TaxGroups, Items, and BusinessAccounts.
+    - Built master CSV and PRICELIST XML loader with exact Decimal(12, 2) currency fields.
+    - Verified: pytest test_master_loader.py passes with 100% and confirmed idempotency.
+
+[x] Task 1.3: Universal XML v2 and JSON v3 Parsers
+    - Built canonical normalized Pydantic batch schema.
+    - Built XMLv2Parser for Format 2.1 XML batches.
+    - Built JSONv3Parser for Format 3.0 JSON batches with exact decimal conversion from minor cents.
+    - Verified: pytest test_parsers.py passed 100% on real TLOG files.
+
+[x] Task 1.4: Ingestion Service, Deduplication & Quarantine
+    - Built non-destructive OutboxWatcher that scans and sorts hub batches without touching outbox/.
+    - Implemented SHA256 file-level and (store_id, seq, business_date) transaction-level idempotency deduplication.
+    - Implemented graceful quarantine isolation and logging for malformed/corrupted files.
+    - Verified: pytest test_ingestion_and_quarantine.py passes 100%.
+
+[x] Task 1.5: Standalone Hub Simulator (Module 6)
+    - Developed standalone in-store hub simulator with time-ordered replay and configurable playback speed.
+    - Implemented full specification-compliant inbox change-file handler with ACK/REJ generation (E301, E302, E312, E315, E318, E320, E321, E410).
+    - Added CLI commands for live duplicate re-emit and damaged file injection.
+    - Verified: pytest test_simulator.py passed 100%.
+
+[x] Task 1.6: Run Full Test Suite & Verify Idempotency
+    - Verified all 6 test suites across database, parsers, master loader, ingestion/quarantine, and simulator.
+    - Verified 100% test pass rate with zero errors.
+
+================================================================================
+PHASE 1 COMPLETE: DATA MODELS, PARSERS, INGESTION ENGINE & SIMULATOR VERIFIED
+================================================================================
+
+[ ] Task 1.4: Invoice & Supplier Document Intelligence
+    - Extract line items and totals from invoices in `invoices/` (PDF text, OCR/multimodal for image invoices).
+    - Verify: Extraction tests match known invoice totals.
+
+[ ] Task 1.5: Retail Operations API & Dashboard UI
+    - Develop backend API for store operations, discrepancies, and reconciliation.
+    - Build dashboard frontend to inspect sales, shifts, cash reconciliations, and alerts.
+    - Verify: API endpoints return 200 OK with expected JSON payloads; UI renders without errors.
+
+[ ] Task 1.6: CodeRabbit Quality Audit & Final Verification
+    - Run static analysis and CodeRabbit review simulation.
+    - Ensure all tests pass, decimal precision is maintained, and edge cases are handled.
+    - Verify: Test suite coverage > 85%, zero critical issues.
+
+================================================================================
+ACTIVITY LOG
+================================================================================
+- Initialized engineering stack with GSD, Roo Code, Ralph Loop, and CodeRabbit.

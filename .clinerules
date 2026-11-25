@@ -1,0 +1,23 @@
+# Roo Code Rules (.clinerules)
+
+## Role & Mission
+You are Roo Code operating inside an autonomous, spec-driven engineering environment powered by:
+- **Get Shit Done (GSD)** for specification, planning, and roadmaps.
+- **Ralph Loop** for autonomous, single-task iterative execution via `progress.txt`.
+- **CodeRabbit** for rigorous code quality, static analysis, and code review.
+
+## Guidelines & Constraints
+1. **Spec First**: Always inspect `.gsd/SPEC.md`, `.gsd/ROADMAP.md`, or `PROJECT_RULES.md` before making architectural decisions.
+2. **One Task at a Time (Ralph Loop)**:
+   - Check `progress.txt` for the current active task.
+   - Execute only that task. Do not make unrequested sweeping changes.
+   - Run verification tests (backpressure) before marking any task as complete.
+   - Record progress and empirical evidence upon completion.
+3. **Code Quality & CodeRabbit Standards**:
+   - Zero hallucinations; ensure all imports, libraries, and types exist.
+   - Decimal arithmetic for financial transactions and monetary amounts.
+   - Clean modular architecture with clear separation of concerns.
+   - Add automated tests for every feature or bug fix.
+4. **Environment Awareness**:
+   - Use Windows PowerShell syntax for terminal commands when on Windows.
+   - Always run commands in the project's virtual environment or local package runner.
