@@ -9,6 +9,7 @@ import {
   Sliders,
   Building,
 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 import { api } from '../services/api';
 import type {
   CatalogItem,
@@ -19,6 +20,7 @@ import type {
 import { Badge } from '../components/common/Badge';
 
 export const PriceBookView: React.FC = () => {
+  const { meta } = useApp();
   const [activeTab, setActiveTab] = useState<'catalog' | 'sync' | 'commercial'>('catalog');
 
   // Catalog State
@@ -207,12 +209,20 @@ export const PriceBookView: React.FC = () => {
                   className="bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
                 >
                   <option value="">All Departments</option>
-                  <option value="10">Dept 10 - Produce</option>
-                  <option value="20">Dept 20 - Bakery</option>
-                  <option value="30">Dept 30 - Dairy</option>
-                  <option value="40">Dept 40 - Deli</option>
-                  <option value="50">Dept 50 - Pantry</option>
-                  <option value="60">Dept 60 - Beverages</option>
+                  {meta?.departments ? (
+                    meta.departments.map((d) => (
+                      <option key={d.code} value={d.code}>
+                        Dept {d.code} - {d.name}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="10">Dept 10 - Produce</option>
+                      <option value="20">Dept 20 - Bakery</option>
+                      <option value="30">Dept 30 - Dairy</option>
+                      <option value="40">Dept 40 - Deli</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>
@@ -362,12 +372,15 @@ export const PriceBookView: React.FC = () => {
                 onChange={(e) => setSelectedAccount(e.target.value)}
                 className="px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200"
               >
-                <option value="BA-0001">BA-0001 — Sunrise Cafe & Bakery</option>
-                <option value="BA-0002">BA-0002 — Downtown Bistro</option>
-                <option value="BA-0003">BA-0003 — Pacific Catering Co.</option>
-                <option value="BA-0004">BA-0004 — Harbor View Inn</option>
-                <option value="BA-0005">BA-0005 — Greenleaf Community Kitchen</option>
-                <option value="BA-0006">BA-0006 — City Center Office Supplies</option>
+                {meta?.business_accounts && meta.business_accounts.length > 0 ? (
+                  meta.business_accounts.map((acc) => (
+                    <option key={acc.account_id} value={acc.account_id}>
+                      {acc.account_id} — {acc.business_name} {acc.terms ? `(${acc.terms})` : ''}
+                    </option>
+                  ))
+                ) : (
+                  <option value="BA-0001">BA-0001 — Sunrise Cafe & Bakery</option>
+                )}
               </select>
             </div>
           </div>

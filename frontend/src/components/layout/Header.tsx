@@ -20,7 +20,7 @@ import { api } from '../../services/api';
 import type { LiveStatusResponse } from '../../types';
 
 export const Header: React.FC = () => {
-  const { storeId, setStoreId, businessDate, setBusinessDate, isDark, toggleTheme, activeView, setActiveView } = useApp();
+  const { storeId, setStoreId, businessDate, setBusinessDate, isDark, toggleTheme, activeView, setActiveView, meta } = useApp();
   const { user, logout } = useAuth();
   const [liveStatus, setLiveStatus] = useState<LiveStatusResponse | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -52,12 +52,7 @@ export const Header: React.FC = () => {
     { id: 'system', label: 'System Health', icon: Server, tooltip: 'Store node connection health and quarantined batch vault' },
   ];
 
-  const datePresets = [
-    { label: 'Oct 04', date: '2026-10-04' },
-    { label: 'Oct 06', date: '2026-10-06' },
-    { label: 'Oct 07', date: '2026-10-07' },
-    { label: 'Oct 12', date: '2026-10-12' },
-  ];
+
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 transition-colors">
@@ -94,8 +89,18 @@ export const Header: React.FC = () => {
                   className="bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Stores (Network)</option>
-                  <option value="BL01">BL01 - Downtown (Seattle)</option>
-                  <option value="BL02">BL02 - Westside (Portland)</option>
+                  {meta?.stores ? (
+                    meta.stores.map((s) => (
+                      <option key={s.store_id} value={s.store_id}>
+                        {s.store_id} - {s.name} ({s.city})
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="BL01">BL01 - Downtown (Seattle)</option>
+                      <option value="BL02">BL02 - Westside (Portland)</option>
+                    </>
+                  )}
                 </select>
               </div>
             </Tooltip>
@@ -105,17 +110,17 @@ export const Header: React.FC = () => {
               <div className="flex items-center px-1.5 text-slate-400">
                 <Calendar className="w-3.5 h-3.5" />
               </div>
-              {datePresets.map((preset) => (
+              {meta?.business_dates && meta.business_dates.slice(0, 4).map((d) => (
                 <button
-                  key={preset.date}
-                  onClick={() => setBusinessDate(preset.date)}
+                  key={d}
+                  onClick={() => setBusinessDate(d)}
                   className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
-                    businessDate === preset.date
+                    businessDate === d
                       ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  {preset.label}
+                  {d.slice(5)}
                 </button>
               ))}
               <input

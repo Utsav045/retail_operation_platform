@@ -15,7 +15,7 @@ import type {
 import { Badge } from '../components/common/Badge';
 
 export const TransactionsView: React.FC = () => {
-  const { storeId, businessDate } = useApp();
+  const { storeId, businessDate, meta } = useApp();
   const [items, setItems] = useState<TransactionSummaryItem[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -116,10 +116,18 @@ export const TransactionsView: React.FC = () => {
               className="bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
               <option value="">All Terminals</option>
-              <option value="REG-01">Register 01 (REG-01)</option>
-              <option value="REG-02">Register 02 (REG-02)</option>
-              <option value="SCO-01">Self-Checkout 01 (SCO-01)</option>
-              <option value="SCO-02">Self-Checkout 02 (SCO-02)</option>
+              {meta?.devices ? (
+                meta.devices.map((dev) => (
+                  <option key={dev} value={dev}>
+                    Terminal {dev}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="REG-01">Register 01 (REG-01)</option>
+                  <option value="REG-02">Register 02 (REG-02)</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -136,10 +144,18 @@ export const TransactionsView: React.FC = () => {
               className="bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
               <option value="">All Payment Types</option>
-              <option value="CASH">Cash</option>
-              <option value="CARD">Credit / Debit Card</option>
-              <option value="ACCOUNT">Business Account</option>
-              <option value="GIFT_CARD">Gift Card</option>
+              {meta?.tenders ? (
+                meta.tenders.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="CASH">Cash</option>
+                  <option value="CARD">Credit / Debit Card</option>
+                </>
+              )}
             </select>
           </div>
 

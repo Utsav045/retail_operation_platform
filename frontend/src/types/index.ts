@@ -329,3 +329,21 @@ export interface QuarantineResponse {
   total: number;
   items: QuarantineItem[];
 }
+
+export interface PlatformMetaOptions {
+  stores: { store_id: string; name: string; city: string }[];
+  business_dates: string[];
+  devices: string[];
+  departments: { code: string; name: string }[];
+  tenders: string[];
+  business_accounts: { account_id: string; business_name: string; terms?: string }[];
+  config: {
+    project_name: string;
+    version: string;
+    target_margin_pct: number;
+    default_variant: string;
+    max_description_length: number;
+    max_price_limit: number;
+    default_manager_email: string;
+  };
+}

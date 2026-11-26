@@ -3,15 +3,16 @@ import smtplib
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Gmail SMTP Configuration
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", os.getenv("GMAIL_USER", ""))
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", os.getenv("GMAIL_APP_PASSWORD", ""))
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@brightleafmarket.com")
+# Dynamic Gmail SMTP Configuration loaded from Settings/.env
+SMTP_HOST = settings.SMTP_HOST
+SMTP_PORT = settings.SMTP_PORT
+SMTP_USER = settings.SMTP_USER
+SMTP_PASSWORD = settings.SMTP_PASSWORD
+SMTP_FROM = settings.SMTP_FROM or settings.SMTP_USER or "noreply@brightleafmarket.com"
 
 
 def send_otp_email(to_email: str, otp: str, user_name: str = "User") -> bool:

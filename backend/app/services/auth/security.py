@@ -6,8 +6,9 @@ import base64
 import json
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
+from app.core.config import settings
 
-SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "brightleaf_retail_ops_super_secret_jwt_key_2026")
+SECRET_KEY = settings.AUTH_SECRET_KEY
 SALT_LENGTH = 16
 ITERATIONS = 100_000
 

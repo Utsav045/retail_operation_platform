@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 
 from app.core.database import get_db
 from app.models.user import User
@@ -76,17 +77,17 @@ async def get_current_user(
 
 
 async def ensure_default_user_seeded(db: AsyncSession):
-    """Ensures default manager user utsavjc@gmail.com (Utsav / Utsav@123) is present in the database."""
-    default_email = "utsavjc@gmail.com"
+    """Ensures default manager user is present in the database from dynamic settings."""
+    default_email = settings.DEFAULT_MANAGER_EMAIL.strip().lower()
     result = await db.execute(select(User).where(User.email == default_email))
     existing_user = result.scalar_one_or_none()
     
     if not existing_user:
         new_user = User(
             email=default_email,
-            name="Utsav",
-            hashed_password=hash_password("Utsav@123"),
-            role="STORE_MANAGER",
+            name=settings.DEFAULT_MANAGER_NAME,
+            hashed_password=hash_password(settings.DEFAULT_MANAGER_PASSWORD),
+            role=settings.DEFAULT_MANAGER_ROLE,
             is_active=True
         )
         db.add(new_user)
@@ -145,10 +146,10 @@ async def forgot_password(req: ForgotPasswordRequest, db: AsyncSession = Depends
             detail=f"No account registered with email {clean_email}."
         )
     
-    # Generate 6-digit OTP and set 15-minute expiry
+    # Generate 6-digit OTP and set expiry from dynamic settings
     otp = generate_otp()
     user.reset_otp = otp
-    user.reset_otp_expires_at = datetime.utcnow() + timedelta(minutes=15)
+    user.reset_otp_expires_at = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRE_MINUTES)
     await db.commit()
     
     # Dispatch email

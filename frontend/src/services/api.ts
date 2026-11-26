@@ -14,6 +14,7 @@ import type {
   LossPreventionResponse,
   AIAskResponse,
   QuarantineResponse,
+  PlatformMetaOptions,
 } from '../types';
 
 const BASE_URL = '/api/v1';
@@ -182,4 +183,7 @@ export const api = {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return request<{ id: number; email: string; name: string; role: string }>('/auth/me', { headers });
   },
+
+  // Dynamic Metadata & Options
+  getMetaOptions: () => request<PlatformMetaOptions>('/meta/options'),
 };
