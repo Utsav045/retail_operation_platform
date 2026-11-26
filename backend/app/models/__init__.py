@@ -8,7 +8,7 @@ from app.models.transaction import (
     CashDrop,
 )
 from app.models.summary import ShiftSummary, EndOfDaySummary
-from app.models.audit import FileImportLog, QuarantinedFile
+from app.models.audit import FileImportLog, QuarantinedFile, SecurityAuditLog
 from app.models.user import User
 
 __all__ = [
@@ -29,5 +29,6 @@ __all__ = [
     "EndOfDaySummary",
     "FileImportLog",
     "QuarantinedFile",
+    "SecurityAuditLog",
     "User",
 ]
