@@ -84,12 +84,16 @@ TASK BACKLOG (RALPH LOOP)
     - Full Pytest Suite: 30 / 30 tests passing in under 22 seconds.
     - Clean repository hygiene: Zero database files committed; .gitignore strictly enforces *.db exclusion.
 
-[x] Task 9: Enterprise Database Optimization & High-Performance Indexing (PHASE 9)
-    - Added 64 B-tree indexes across all relational tables for ultra-fast query execution (<1ms).
-    - Composite indexes on (store_id, business_date), (store_id, business_date, status), (device_id, business_date), and (staff_id, business_date).
-    - Line item and tender indexes on (item_code, is_void), (tender_type, amount), and (account_id).
-    - Eager batch relationship mapping (lazy="selectin") eliminating N+1 query bottlenecks on transaction drilldowns.
-    - Clean entity schema with clear docstrings, foreign keys, and cascading relationships.
-    - Added SecurityAuditLog table with indexes on (event_type, timestamp) and (actor_email, timestamp).
-    - Verified with full 33-test suite passing (100% pass rate).
+[x] Task 10: Unified Error Architecture & User-Identical Diagnostics (PHASE 10)
+    - Created centralized error architecture in backend/app/core/errors.py.
+    - Global exception handlers for AppException, StarletteHTTPException, RequestValidationError, and unhandled Exception.
+    - Uniform user-identical response payload across all 4xx/5xx responses:
+        * error.code: Clean machine-readable uppercase code (e.g. NOT_FOUND, FORM_VALIDATION_FAILED, UNAUTHORIZED).
+        * error.message: Plain-English, conversational, simplified description of the error.
+        * error.user_action: Clear, practical next steps on how the user can resolve the issue.
+        * error.status_code: Standard HTTP status code.
+    - In-Store Hub error dictionary (HUB_ERROR_TRANSLATIONS) translating cryptic register codes (E301-E410) into plain retail explanations.
+    - Frontend API client (src/services/api.ts) updated to parse uniform error.message and error.user_action for consistent toast/banner alerts.
+    - Automated Test Suite: 4 comprehensive tests in tests/test_errors.py (100% pass rate).
+    - Master Test Matrix: Sheet 'Phase 10 - Error Architecture' (10/10 scenarios PASSED, Master total: 189/189).
 

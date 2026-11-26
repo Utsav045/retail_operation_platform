@@ -4,6 +4,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.errors import (
+    AppException,
+    app_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+    global_exception_handler,
+)
 
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.transactions import router as transactions_router
@@ -19,6 +29,12 @@ app = FastAPI(
     description="Next-generation enterprise retail operations platform integrating live monitoring, automated daily EOD reconciliation, two-way price synchronization, and multimodal AI intelligence.",
     version="1.0.0"
 )
+
+# Register Unified Simplified Exception Handlers
+app.add_exception_handler(AppException, app_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 # Enable CORS for local development and tablet browser access
 app.add_middleware(

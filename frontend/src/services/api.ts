@@ -29,10 +29,14 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    let errorDetail = `Request failed with status ${response.status}`;
+    let errorDetail = `Unable to complete request (${response.status}). Please try again.`;
     try {
       const errJson = await response.json();
-      if (errJson.detail) {
+      if (errJson.error && errJson.error.message) {
+        errorDetail = errJson.error.user_action
+          ? `${errJson.error.message} (${errJson.error.user_action})`
+          : errJson.error.message;
+      } else if (errJson.detail) {
         errorDetail = typeof errJson.detail === 'string' ? errJson.detail : JSON.stringify(errJson.detail);
       }
     } catch {
