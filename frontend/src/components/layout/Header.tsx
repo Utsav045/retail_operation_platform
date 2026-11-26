@@ -11,14 +11,17 @@ import {
   Tag,
   Sparkles,
   Server,
+  LogOut,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { Tooltip } from '../common/Tooltip';
 import { api } from '../../services/api';
 import type { LiveStatusResponse } from '../../types';
 
 export const Header: React.FC = () => {
   const { storeId, setStoreId, businessDate, setBusinessDate, isDark, toggleTheme, activeView, setActiveView } = useApp();
+  const { user, logout } = useAuth();
   const [liveStatus, setLiveStatus] = useState<LiveStatusResponse | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -145,6 +148,32 @@ export const Header: React.FC = () => {
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
             </Tooltip>
+
+            {/* Authenticated User Profile & Sign Out */}
+            {user && (
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                <Tooltip content={`Signed in as ${user.name} (${user.email})`}>
+                  <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold flex items-center justify-center text-[10px]">
+                      {user.name.charAt(0)}
+                    </div>
+                    <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-200">
+                      {user.name}
+                    </span>
+                  </div>
+                </Tooltip>
+
+                <Tooltip content="Sign Out from Platform">
+                  <button
+                    onClick={logout}
+                    aria-label="Sign Out"
+                    className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </div>
 

@@ -147,4 +147,35 @@ export const api = {
   // Quarantine & Hub Health
   getQuarantine: () => request<QuarantineResponse>('/quarantine'),
   getQuarantinePayload: (fileId: number) => request<{ file_name: string; payload: string }>(`/quarantine/${fileId}`),
+
+  // Authentication
+  login: (email: string, password: string) => {
+    return request<{ access_token: string; token_type: string; user: { id: number; email: string; name: string; role: string } }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  },
+  forgotPassword: (email: string) => {
+    return request<{ status: string; message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+  verifyOtp: (email: string, otp: string) => {
+    return request<{ status: string; message: string }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+  resetPassword: (email: string, otp: string, new_password: string) => {
+    return request<{ status: string; message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, new_password }),
+    });
+  },
+  getMe: (token?: string) => {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return request<{ id: number; email: string; name: string; role: string }>('/auth/me', { headers });
+  },
 };

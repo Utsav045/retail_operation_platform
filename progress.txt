@@ -84,19 +84,22 @@ TASK BACKLOG (RALPH LOOP)
     - Full Pytest Suite: 30 / 30 tests passing in under 22 seconds.
     - Clean repository hygiene: Zero database files committed; .gitignore strictly enforces *.db exclusion.
 
-[x] Task 7: Frontend Engineering — Minimalist Enterprise Operations Suite (PHASE 7)
-    - Initialized React 18 + TypeScript + Vite + Tailwind CSS in frontend/.
-    - Strict adherence to Pinterest-inspired light color palette with theme switcher toggle (Light / Dark).
-    - Universal floating tooltip engine explaining all metrics, formulas, and error codes.
-    - Simplified plain-English retail terminology across all user-facing labels.
-    - Zero emojis anywhere in UI; 100% crisp Lucide React SVG iconography.
-    - 100% fluid responsiveness across Mobile, Tablet, Laptop, and Desktop.
-    - Screen 1: Operations Overview & Daily Pulse (/overview).
-    - Screen 2: Shift & Daily EOD Reconciliation Inspector (/reconciliation).
-    - Screen 3: Transaction Ledger & Virtual POS Receipt Modal (/transactions).
-    - Screen 4: Central Price Book & Store Hub Sync Manager (/pricing).
-    - Screen 5: Multimodal AI Intelligence & Loss Prevention Radar (/intelligence).
-    - Screen 6: System Integrity & Quarantine Vault (/system).
-    - Verification: Clean compilation with 0 errors / 0 warnings (npm run build).
-    - Excel Matrix: Added Sheet 'Phase 7 - Frontend Suite' (25/25 scenarios PASSED, Master total: 169/169).
+[x] Task 8: Authentication, User Security & Forgot Password with Gmail OTP (PHASE 8)
+    - Created User database model in backend/app/models/user.py with role, PBKDF2 hash, and OTP expiry tracking.
+    - Automatic seeder: Provisioned default user utsavjc@gmail.com (Name: Utsav, Password: Utsav@123, Role: STORE_MANAGER).
+    - Password hashing & token verification service in backend/app/services/auth/security.py (HMAC SHA-256 tokens).
+    - Gmail SMTP email dispatch service in backend/app/services/auth/email.py (STARTTLS port 587, HTML/plain-text templates).
+    - Auth API endpoints in backend/app/api/v1/auth.py:
+        * POST /api/v1/auth/login: Validates credentials, returns bearer token & user profile.
+        * POST /api/v1/auth/forgot-password: Generates 6-digit OTP code, sets 15-min expiry, dispatches email to Gmail.
+        * POST /api/v1/auth/verify-otp: Validates 6-digit code.
+        * POST /api/v1/auth/reset-password: Resets password, clears OTP from database.
+        * GET /api/v1/auth/me: Returns current authenticated session.
+    - Frontend Auth Integration:
+        * AuthContext with persistent localStorage token storage and reactive state.
+        * Pinterest-inspired Login screen in frontend/src/views/LoginView.tsx with quick-fill convenience pill.
+        * Multi-step Forgot Password modal in frontend/src/components/auth/ForgotPasswordModal.tsx.
+        * User profile avatar pill and Sign Out button in Header navigation.
+    - Automated Test Suite: 3 comprehensive tests in tests/test_auth.py (100% pass rate).
+    - Master Test Matrix: Sheet 'Phase 8 - User Auth & Security' (10/10 scenarios PASSED, Master total: 179/179).
 

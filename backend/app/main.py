@@ -12,6 +12,7 @@ from app.api.v1.quarantine import router as quarantine_router
 from app.api.v1.live import router as live_router
 from app.api.v1.pricing import router as pricing_router
 from app.api.v1.ai import router as ai_router
+from app.api.v1.auth import router as auth_router
 
 app = FastAPI(
     title="Brightleaf Market — Retail Operations Platform",
@@ -37,6 +38,7 @@ app.include_router(quarantine_router, prefix=api_v1_prefix)
 app.include_router(live_router, prefix=api_v1_prefix)
 app.include_router(pricing_router, prefix=api_v1_prefix)
 app.include_router(ai_router, prefix=api_v1_prefix)
+app.include_router(auth_router, prefix=api_v1_prefix)
 
 
 @app.get("/api/health")
