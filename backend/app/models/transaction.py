@@ -14,9 +14,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.models.base import SoftDeleteMixin
 
 
-class Transaction(Base):
+class Transaction(Base, SoftDeleteMixin):
     __tablename__ = "transactions"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -72,7 +73,7 @@ class Transaction(Base):
     )
 
 
-class TransactionLine(Base):
+class TransactionLine(Base, SoftDeleteMixin):
     __tablename__ = "transaction_lines"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -101,7 +102,7 @@ class TransactionLine(Base):
     )
 
 
-class TransactionTender(Base):
+class TransactionTender(Base, SoftDeleteMixin):
     __tablename__ = "transaction_tenders"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -125,7 +126,7 @@ class TransactionTender(Base):
     )
 
 
-class TransactionTax(Base):
+class TransactionTax(Base, SoftDeleteMixin):
     __tablename__ = "transaction_taxes"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -138,7 +139,7 @@ class TransactionTax(Base):
     transaction: Mapped["Transaction"] = relationship("Transaction", back_populates="taxes")
 
 
-class GiftCardActivity(Base):
+class GiftCardActivity(Base, SoftDeleteMixin):
     __tablename__ = "gift_card_activities"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -152,7 +153,7 @@ class GiftCardActivity(Base):
     transaction: Mapped["Transaction"] = relationship("Transaction", back_populates="gift_cards")
 
 
-class CashDrop(Base):
+class CashDrop(Base, SoftDeleteMixin):
     __tablename__ = "cash_drops"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

@@ -1,3 +1,4 @@
+from app.models.base import SoftDeleteMixin
 from app.models.master import Store, Device, Staff, Department, TaxGroup, Item, BusinessAccount
 from app.models.transaction import (
     Transaction,
@@ -12,6 +13,7 @@ from app.models.audit import FileImportLog, QuarantinedFile, SecurityAuditLog
 from app.models.user import User
 
 __all__ = [
+    "SoftDeleteMixin",
     "Store",
     "Device",
     "Staff",

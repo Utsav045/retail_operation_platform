@@ -3,9 +3,10 @@ from typing import Optional
 from sqlalchemy import String, Integer, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
+from app.models.base import SoftDeleteMixin
 
 
-class User(Base):
+class User(Base, SoftDeleteMixin):
     __tablename__ = "users"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

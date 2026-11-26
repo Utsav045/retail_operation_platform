@@ -186,4 +186,20 @@ export const api = {
 
   // Dynamic Metadata & Options
   getMetaOptions: () => request<PlatformMetaOptions>('/meta/options'),
+
+  // Soft Delete & Restore Actions (Zero Hard Deletes)
+  softDeleteItem: (code: string) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/pricing/items/${code}`, { method: 'DELETE' }),
+  restoreItem: (code: string) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/pricing/items/${code}/restore`, { method: 'POST' }),
+  softDeleteTransaction: (txId: number) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/transactions/${txId}`, { method: 'DELETE' }),
+  restoreTransaction: (txId: number) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/transactions/${txId}/restore`, { method: 'POST' }),
+  softDeleteQuarantinedFile: (fileId: number) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/quarantine/${fileId}`, { method: 'DELETE' }),
+  restoreQuarantinedFile: (fileId: number) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/quarantine/${fileId}/restore`, { method: 'POST' }),
+  softDeleteUser: (userId: number) =>
+    request<{ status: string; message: string; is_deleted: boolean }>(`/auth/users/${userId}`, { method: 'DELETE' }),
 };

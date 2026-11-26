@@ -10,9 +10,9 @@
 ================================================================================
 CURRENT STATE
 ================================================================================
-Active Phase: Phase 11 — Dynamic Metadata & Zero Hardcoded Values
-Status: 100% Completed & Verified (All 11 Phases Done, 199/199 Scenarios Passed)
-Current Loop: 11
+Active Phase: Phase 12 — Universal Soft Delete Architecture & Zero Hard Deletes
+Status: 100% Completed & Verified (All 12 Phases Done, 209/209 Scenarios Passed)
+Current Loop: 12
 
 ================================================================================
 TASK BACKLOG (RALPH LOOP)
@@ -127,5 +127,16 @@ TASK BACKLOG (RALPH LOOP)
     - Zero hardcoded stores, dates, or terminals across frontend and backend.
     - Automated Test Suite: tests/test_dynamic_meta.py (100% pass rate).
     - Master Test Matrix: Sheet 'Phase 11 - Dynamic Meta' (10/10 scenarios PASSED, Master total: 199/199 scenarios, 100.0% Pass Rate).
+
+[x] Task 12: Universal Soft Delete Architecture & Zero Hard Deletes (PHASE 12)
+    - Implement SoftDeleteMixin with is_deleted and deleted_at on all ORM models.
+    - SQLAlchemy session interceptor preventing hard deletes by converting session.delete() into soft_delete().
+    - Query isolation filtering out soft-deleted records in standard queries via with_loader_criteria.
+    - Soft delete and restore endpoints for products (/api/v1/pricing/items/{code}), transactions (/api/v1/transactions/{id}), quarantined files (/api/v1/quarantine/{id}), and users (/api/v1/auth/users/{id}).
+    - Database migration adding soft delete columns and indexes across all existing SQLite tables.
+    - Frontend integration with soft delete action in Price Book view and centralized api client methods.
+    - Automated Test Suite: 6 tests in tests/test_soft_delete.py (100% pass rate).
+    - Master Test Matrix: Sheet 'Phase 12 - Soft Delete' (10/10 scenarios PASSED, Master total: 209/209 scenarios, 100.0% Pass Rate).
+
 
 

@@ -14,6 +14,7 @@ router = APIRouter(prefix="/pricing", tags=["Price List & Hub Sync"])
 async def list_items(
     dept: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    include_deleted: bool = Query(False, description="Include soft-deleted products"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -22,6 +23,8 @@ async def list_items(
     List items from central catalog with code, variant, description, department, price, tax group, and age restriction.
     """
     query = select(Item)
+    if include_deleted:
+        query = query.execution_options(include_deleted=True)
     if dept:
         query = query.where(Item.dept == dept.upper())
     if search:
@@ -41,10 +44,61 @@ async def list_items(
                 "dept": itm.dept,
                 "price": float(itm.price),
                 "tax_group": itm.tax_group,
-                "min_age": itm.min_age
+                "min_age": itm.min_age,
+                "is_deleted": itm.is_deleted,
+                "deleted_at": itm.deleted_at.isoformat() if itm.deleted_at else None
             }
             for itm in items
         ]
+    }
+
+
+@router.delete("/items/{item_code}")
+async def soft_delete_item(
+    item_code: str,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Soft-delete an item from the product catalog. Never deletes data from SQLite.
+    """
+    res = await db.execute(select(Item).where(Item.code == item_code))
+    item = res.scalars().first()
+    if not item:
+        raise HTTPException(status_code=404, detail=f"Item with code {item_code} not found.")
+
+    item.soft_delete()
+    await db.commit()
+    return {
+        "status": "SUCCESS",
+        "message": f"Item {item_code} successfully soft-deleted. Data safely preserved in ledger.",
+        "code": item.code,
+        "is_deleted": item.is_deleted,
+        "deleted_at": item.deleted_at.isoformat() if item.deleted_at else None
+    }
+
+
+@router.post("/items/{item_code}/restore")
+async def restore_item(
+    item_code: str,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Restore a previously soft-deleted item back to active status.
+    """
+    res = await db.execute(
+        select(Item).where(Item.code == item_code).execution_options(include_deleted=True)
+    )
+    item = res.scalars().first()
+    if not item:
+        raise HTTPException(status_code=404, detail=f"Item with code {item_code} not found.")
+
+    item.restore()
+    await db.commit()
+    return {
+        "status": "SUCCESS",
+        "message": f"Item {item_code} successfully restored to active catalog.",
+        "code": item.code,
+        "is_deleted": item.is_deleted
     }
 
 

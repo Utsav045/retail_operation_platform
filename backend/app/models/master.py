@@ -3,9 +3,10 @@ from typing import Optional
 from sqlalchemy import String, Numeric, Integer, Boolean, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.models.base import SoftDeleteMixin
 
 
-class Store(Base):
+class Store(Base, SoftDeleteMixin):
     """Store locations and regional configuration."""
     __tablename__ = "stores"
     
@@ -17,7 +18,7 @@ class Store(Base):
     timezone: Mapped[str] = mapped_column(String(50), default="America/Los_Angeles")
 
 
-class Device(Base):
+class Device(Base, SoftDeleteMixin):
     """In-store checkout terminals, cashier registers, and self-checkouts."""
     __tablename__ = "devices"
     
@@ -33,7 +34,7 @@ class Device(Base):
     )
 
 
-class Staff(Base):
+class Staff(Base, SoftDeleteMixin):
     """Store employees, cashiers, supervisors, and store managers."""
     __tablename__ = "staff"
     
@@ -49,7 +50,7 @@ class Staff(Base):
     )
 
 
-class Department(Base):
+class Department(Base, SoftDeleteMixin):
     """Merchandise category departments (Produce, Bakery, Dairy, Deli, etc.)."""
     __tablename__ = "departments"
     
@@ -59,7 +60,7 @@ class Department(Base):
     min_age: Mapped[int] = mapped_column(Integer, default=0)
 
 
-class TaxGroup(Base):
+class TaxGroup(Base, SoftDeleteMixin):
     """Tax classification categories and jurisdiction percentages."""
     __tablename__ = "tax_groups"
     
@@ -68,7 +69,7 @@ class TaxGroup(Base):
     description: Mapped[str] = mapped_column(String(100), nullable=False)
 
 
-class Item(Base):
+class Item(Base, SoftDeleteMixin):
     """Central product catalog with variant SKUs, department mapping, and retail shelf prices."""
     __tablename__ = "items"
     
@@ -91,7 +92,7 @@ class Item(Base):
     )
 
 
-class BusinessAccount(Base):
+class BusinessAccount(Base, SoftDeleteMixin):
     """Commercial credit accounts for local wholesale customers (cafes, caterers, bakeries)."""
     __tablename__ = "business_accounts"
     

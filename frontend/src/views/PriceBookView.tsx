@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Sliders,
   Building,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../services/api';
@@ -59,6 +60,14 @@ export const PriceBookView: React.FC = () => {
         setCatalogLoading(false);
       })
       .catch(() => setCatalogLoading(false));
+  };
+
+  const handleSoftDelete = (code: string, desc: string) => {
+    if (window.confirm(`Soft-delete "${desc}" (${code})?\n\nThis non-destructively archives the product in the database while preserving all historical sales, tenders, and audit history.`)) {
+      api.softDeleteItem(code)
+        .then(() => fetchCatalog())
+        .catch((err) => alert(err.message || 'Failed to soft-delete item.'));
+    }
   };
 
   useEffect(() => {
@@ -258,6 +267,7 @@ export const PriceBookView: React.FC = () => {
                       <th className="py-2.5 px-3 font-mono text-right">Retail Shelf Price</th>
                       <th className="py-2.5 px-3 text-center">Tax Group</th>
                       <th className="py-2.5 px-3 text-center">Restrictions</th>
+                      <th className="py-2.5 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -285,6 +295,15 @@ export const PriceBookView: React.FC = () => {
                           ) : (
                             <span className="text-[10px] text-slate-400">Standard</span>
                           )}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <button
+                            onClick={() => handleSoftDelete(item.code, item.description)}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                            title="Soft delete product (preserves ledger data)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     ))}

@@ -232,3 +232,71 @@ async def get_transaction_detail(
             for g in tx.gift_cards
         ]
     }
+
+
+@router.delete("/{tx_id}")
+async def soft_delete_transaction(
+    tx_id: int,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Soft-delete a transaction and its associated lines/tenders.
+    Never removes data from SQLite.
+    """
+    res = await db.execute(select(Transaction).where(Transaction.id == tx_id))
+    tx = res.scalars().first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+
+    tx.soft_delete()
+    for line in tx.lines:
+        line.soft_delete()
+    for tender in tx.tenders:
+        tender.soft_delete()
+    for tax in tx.taxes:
+        tax.soft_delete()
+    for gc in tx.gift_cards:
+        gc.soft_delete()
+
+    await db.commit()
+    return {
+        "status": "SUCCESS",
+        "message": f"Transaction #{tx.seq} (ID {tx_id}) successfully soft-deleted. Audit trail preserved.",
+        "transaction_id": tx.id,
+        "is_deleted": tx.is_deleted,
+        "deleted_at": tx.deleted_at.isoformat() if tx.deleted_at else None
+    }
+
+
+@router.post("/{tx_id}/restore")
+async def restore_transaction(
+    tx_id: int,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Restore a soft-deleted transaction and its associated lines/tenders.
+    """
+    res = await db.execute(
+        select(Transaction).where(Transaction.id == tx_id).execution_options(include_deleted=True)
+    )
+    tx = res.scalars().first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+
+    tx.restore()
+    for line in tx.lines:
+        line.restore()
+    for tender in tx.tenders:
+        tender.restore()
+    for tax in tx.taxes:
+        tax.restore()
+    for gc in tx.gift_cards:
+        gc.restore()
+
+    await db.commit()
+    return {
+        "status": "SUCCESS",
+        "message": f"Transaction #{tx.seq} (ID {tx_id}) successfully restored.",
+        "transaction_id": tx.id,
+        "is_deleted": tx.is_deleted
+    }

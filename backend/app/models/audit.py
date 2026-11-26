@@ -3,13 +3,14 @@ from typing import Optional
 from sqlalchemy import String, Integer, DateTime, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
+from app.models.base import SoftDeleteMixin
 
 
 def _now():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-class FileImportLog(Base):
+class FileImportLog(Base, SoftDeleteMixin):
     """Log of all ingested transaction batches with SHA256 integrity hash."""
     __tablename__ = "file_import_logs"
     
@@ -33,7 +34,7 @@ class FileImportLog(Base):
     )
 
 
-class QuarantinedFile(Base):
+class QuarantinedFile(Base, SoftDeleteMixin):
     """Isolated corrupt or unparseable batches preserving ground-truth ledger integrity."""
     __tablename__ = "quarantined_files"
     
@@ -45,7 +46,7 @@ class QuarantinedFile(Base):
     quarantined_at: Mapped[datetime] = mapped_column(DateTime, default=_now, index=True)
 
 
-class SecurityAuditLog(Base):
+class SecurityAuditLog(Base, SoftDeleteMixin):
     """Immutable security audit log tracking logins, failed attempts, OTP requests, and privileged actions."""
     __tablename__ = "security_audit_logs"
     

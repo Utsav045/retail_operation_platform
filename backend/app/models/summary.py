@@ -5,9 +5,10 @@ from sqlalchemy import String, Numeric, Integer, Date, DateTime, Boolean, Text, 
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.sqlite import JSON
 from app.core.database import Base
+from app.models.base import SoftDeleteMixin
 
 
-class ShiftSummary(Base):
+class ShiftSummary(Base, SoftDeleteMixin):
     __tablename__ = "shift_summaries"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -34,7 +35,7 @@ class ShiftSummary(Base):
     )
 
 
-class EndOfDaySummary(Base):
+class EndOfDaySummary(Base, SoftDeleteMixin):
     __tablename__ = "end_of_day_summaries"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

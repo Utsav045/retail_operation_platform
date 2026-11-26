@@ -79,7 +79,9 @@ async def get_current_user(
 async def ensure_default_user_seeded(db: AsyncSession):
     """Ensures default manager user is present in the database from dynamic settings."""
     default_email = settings.DEFAULT_MANAGER_EMAIL.strip().lower()
-    result = await db.execute(select(User).where(User.email == default_email))
+    result = await db.execute(
+        select(User).where(User.email == default_email).execution_options(include_deleted=True)
+    )
     existing_user = result.scalar_one_or_none()
     
     if not existing_user:
@@ -246,4 +248,62 @@ async def get_current_user_profile(user: User = Depends(get_current_user)):
         "name": user.name,
         "role": user.role,
         "created_at": user.created_at.isoformat()
+    }
+
+
+@router.delete("/users/{user_id}")
+async def soft_delete_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Soft-delete a user account.
+    Self-deletion of the active session user is rejected for safety.
+    """
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot soft-delete your own active session account."
+        )
+
+    res = await db.execute(select(User).where(User.id == user_id))
+    target_user = res.scalar_one_or_none()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User account not found.")
+
+    target_user.soft_delete()
+    await db.commit()
+    return {
+        "status": "SUCCESS",
+        "message": f"User {target_user.email} successfully soft-deleted. Account archived non-destructively.",
+        "user_id": target_user.id,
+        "is_deleted": target_user.is_deleted,
+        "deleted_at": target_user.deleted_at.isoformat() if target_user.deleted_at else None
+    }
+
+
+@router.post("/users/{user_id}/restore")
+async def restore_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Restore a previously soft-deleted user account.
+    """
+    res = await db.execute(
+        select(User).where(User.id == user_id).execution_options(include_deleted=True)
+    )
+    target_user = res.scalar_one_or_none()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User account not found.")
+
+    target_user.restore()
+    await db.commit()
+    return {
+        "status": "SUCCESS",
+        "message": f"User {target_user.email} successfully restored to active status.",
+        "user_id": target_user.id,
+        "is_deleted": target_user.is_deleted
     }

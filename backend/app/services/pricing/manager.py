@@ -110,7 +110,7 @@ class PricingService:
 
             stmt = (
                 update(Item)
-                .where(and_(Item.code == code, Item.variant == variant))
+                .where(and_(Item.code == code, Item.variant == variant, Item.is_deleted == False))
                 .values(price=new_price)
             )
             await self.db.execute(stmt)
