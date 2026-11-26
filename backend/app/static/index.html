@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Brightleaf Market — Retail Operations Platform</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.6); }
+    .badge-matched { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
+    .badge-mismatch { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
+    .badge-review { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid #f59e0b; }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="glass-card sticky top-0 z-50 px-6 py-3 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+        <i data-lucide="shopping-bag" class="w-5 h-5 text-slate-950 font-bold"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          Brightleaf Market <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">Retail Operations</span>
+        </h1>
+        <p class="text-xs text-slate-400">Live Telemetry • Multi-Store EOD Reconciliation • Price Sync • AI Hub</p>
+      </div>
+    </div>
+
+    <!-- Controls: Store Selector, Date Picker, Live Indicator -->
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center bg-slate-800/90 rounded-lg p-1 border border-slate-700 text-sm">
+        <label for="storeSelect" class="text-xs text-slate-400 px-2">Store:</label>
+        <select id="storeSelect" onchange="loadActiveTabData()" class="bg-transparent text-white font-medium focus:outline-none pr-3 cursor-pointer">
+          <option value="ALL">All Stores (BL01 & BL02)</option>
+          <option value="BL01" selected>BL01 - Downtown (Format 3.0 JSON)</option>
+          <option value="BL02">BL02 - Westside (Format 2.1 XML)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center bg-slate-800/90 rounded-lg p-1 border border-slate-700 text-sm">
+        <label for="dateSelect" class="text-xs text-slate-400 px-2">Date:</label>
+        <input type="date" id="dateSelect" value="2026-10-04" onchange="loadActiveTabData()" class="bg-transparent text-white font-medium focus:outline-none pr-2 cursor-pointer">
+      </div>
+
+      <!-- Quick Date Pills -->
+      <div class="hidden lg:flex items-center gap-1 text-xs">
+        <button onclick="setSampleDate('2026-10-04')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">10/04</button>
+        <button onclick="setSampleDate('2026-10-06')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">10/06</button>
+        <button onclick="setSampleDate('2026-10-07')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">10/07</button>
+        <button onclick="setSampleDate('2026-10-12')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">10/12</button>
+      </div>
+
+      <!-- Live Heartbeat -->
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 font-medium">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="liveStatusText">Hub Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs Bar -->
+  <div class="bg-slate-900/90 border-b border-slate-800 px-6 py-2 flex overflow-x-auto gap-2">
+    <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 bg-emerald-600 text-white shadow">
+      <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview & Sales
+    </button>
+    <button onclick="switchTab('reconciliation')" id="tab-reconciliation" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <i data-lucide="scale" class="w-4 h-4"></i> EOD & Shift Reconciliation
+    </button>
+    <button onclick="switchTab('transactions')" id="tab-transactions" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <i data-lucide="receipt" class="w-4 h-4"></i> Transactions
+    </button>
+    <button onclick="switchTab('pricing')" id="tab-pricing" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <i data-lucide="tags" class="w-4 h-4"></i> Price Book & Hub Sync
+    </button>
+    <button onclick="switchTab('ai')" id="tab-ai" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <i data-lucide="sparkles" class="w-4 h-4"></i> AI Invoices & Loss Prevention
+    </button>
+    <button onclick="switchTab('quarantine')" id="tab-quarantine" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <i data-lucide="shield-alert" class="w-4 h-4"></i> Quarantined Files
+    </button>
+  </div>
+
+  <!-- Main Container -->
+  <main class="flex-1 p-6 space-y-6 overflow-y-auto max-w-7xl mx-auto w-full">
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: OVERVIEW & LIVE SALES                             -->
+    <!-- ======================================================== -->
+    <div id="content-overview" class="tab-content space-y-6">
+      <!-- KPI Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="glass-card p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>TOTAL SALES (NET)</span>
+            <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div id="kpiTotalSales" class="text-2xl font-bold text-white mt-1">$0.00</div>
+          <div class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+            <span id="kpiCounterShare" class="text-slate-300 font-medium">Counter: $0.00</span> • <span id="kpiScoShare" class="text-slate-300 font-medium">SCO: $0.00</span>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>TRANSACTIONS</span>
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-sky-400"></i>
+          </div>
+          <div id="kpiTxCount" class="text-2xl font-bold text-white mt-1">0</div>
+          <div class="text-xs text-slate-400 mt-1">Completed sale/refund orders</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>AVERAGE BASKET</span>
+            <i data-lucide="trending-up" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <div id="kpiAvgBasket" class="text-2xl font-bold text-white mt-1">$0.00</div>
+          <div class="text-xs text-slate-400 mt-1">Net revenue per transaction</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>GIFT CARD LOADS</span>
+            <i data-lucide="gift" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <div id="kpiGiftCard" class="text-2xl font-bold text-white mt-1">$0.00</div>
+          <div class="text-xs text-slate-400 mt-1">Stored value activations</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>RECONCILIATION</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div id="kpiReconStatus" class="text-xl font-bold text-emerald-400 mt-1">MATCHED</div>
+          <div id="kpiReconDiff" class="text-xs text-slate-400 mt-1">Zero variance</div>
+        </div>
+      </div>
+
+      <!-- Charts & Visuals -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Hourly Sales Trend -->
+        <div class="glass-card p-5 rounded-xl lg:col-span-2">
+          <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> Sales Velocity by Hour
+          </h3>
+          <div class="h-64">
+            <canvas id="hourlySalesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Tender Breakdown -->
+        <div class="glass-card p-5 rounded-xl">
+          <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-sky-400"></i> Tender Breakdown
+          </h3>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="tendersChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Department Performance & Watch List -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Department Table -->
+        <div class="glass-card p-5 rounded-xl">
+          <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i> Department Breakdown
+          </h3>
+          <div class="overflow-x-auto max-h-80 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="text-slate-400 border-b border-slate-700 bg-slate-800/50 sticky top-0">
+                <tr>
+                  <th class="py-2 px-3">Dept Code</th>
+                  <th class="py-2 px-3">Units Sold</th>
+                  <th class="py-2 px-3 text-right">Net Sales</th>
+                </tr>
+              </thead>
+              <tbody id="departmentsTableBody" class="divide-y divide-slate-800">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Exception Watch List -->
+        <div class="glass-card p-5 rounded-xl">
+          <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Watch List / Exception Feed
+            </span>
+            <span id="watchListCount" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">0 events</span>
+          </h3>
+          <div id="watchListFeed" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: RECONCILIATION ENGINE                             -->
+    <!-- ======================================================== -->
+    <div id="content-reconciliation" class="tab-content hidden space-y-6">
+      <!-- EOD Comparison Card -->
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-700 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              End-of-Day (EOD) Audit Reconciliation
+            </h2>
+            <p class="text-xs text-slate-400">Recomputing ground truth from transaction logs vs in-store hub stated summaries</p>
+          </div>
+          <div id="eodStatusBadge" class="text-sm font-bold px-3 py-1.5 rounded-full badge-matched">
+            MATCHED
+          </div>
+        </div>
+
+        <!-- Root Cause Diagnostic Callout (if mismatch) -->
+        <div id="rootCauseBanner" class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3">
+          <i data-lucide="info" class="w-5 h-5 flex-shrink-0 text-amber-400 mt-0.5"></i>
+          <div>
+            <span class="font-bold block mb-1">Diagnostic Root Cause Analysis:</span>
+            <span id="rootCauseText">All raw transaction sums exactly match stated totals. No anomalies detected.</span>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="text-slate-400 border-b border-slate-700 bg-slate-800/40">
+              <tr>
+                <th class="py-3 px-4">Financial Metric</th>
+                <th class="py-3 px-4 text-right">Ground Truth (TLOG)</th>
+                <th class="py-3 px-4 text-right">Hub Stated (EOD)</th>
+                <th class="py-3 px-4 text-right">Variance</th>
+                <th class="py-3 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="eodComparisonTable" class="divide-y divide-slate-800">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Shift Cash Drawer Reconciliation Table -->
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <div class="border-b border-slate-700 pb-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            Shift Cash Drawer Balancing
+          </h2>
+          <p class="text-xs text-slate-400">Formula: Expected Cash = Opening Float + Cash Taken - Cash Refunds - Cash Drops</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="text-slate-400 border-b border-slate-700 bg-slate-800/40">
+              <tr>
+                <th class="py-3 px-4">Shift ID</th>
+                <th class="py-3 px-4">Device / Cashier</th>
+                <th class="py-3 px-4 text-right">Opening Float</th>
+                <th class="py-3 px-4 text-right">Expected Cash</th>
+                <th class="py-3 px-4 text-right">Actual Count</th>
+                <th class="py-3 px-4 text-right">Variance</th>
+                <th class="py-3 px-4 text-center">Audit Status</th>
+              </tr>
+            </thead>
+            <tbody id="shiftComparisonTable" class="divide-y divide-slate-800">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: TRANSACTIONS BROWSER                              -->
+    <!-- ======================================================== -->
+    <div id="content-transactions" class="tab-content hidden space-y-6">
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <!-- Filter Controls -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Transaction Type</label>
+            <select id="txFilterType" onchange="loadTransactions()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="">All Types</option>
+              <option value="SALE">SALE</option>
+              <option value="REFUND">REFUND</option>
+              <option value="NO_SALE">NO_SALE</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Tender Type</label>
+            <select id="txFilterTender" onchange="loadTransactions()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="">All Tenders</option>
+              <option value="CASH">Cash</option>
+              <option value="CREDIT_CARD">Credit Card</option>
+              <option value="DEBIT_CARD">Debit Card</option>
+              <option value="GIFT_CARD">Gift Card</option>
+              <option value="COMMERCIAL_ACCOUNT">Commercial Account</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Exception Filter</label>
+            <select id="txFilterVoid" onchange="loadTransactions()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="">All Records</option>
+              <option value="true">Transactions with Voids Only</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button onclick="loadTransactions()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded-lg text-sm border border-slate-700 flex items-center justify-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="text-slate-400 border-b border-slate-700 bg-slate-800/40">
+              <tr>
+                <th class="py-3 px-4">Seq</th>
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Store</th>
+                <th class="py-3 px-4">Type</th>
+                <th class="py-3 px-4">Device</th>
+                <th class="py-3 px-4">Cashier</th>
+                <th class="py-3 px-4 text-center">Items (Voids)</th>
+                <th class="py-3 px-4 text-right">Grand Total</th>
+                <th class="py-3 px-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody" class="divide-y divide-slate-800">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: PRICE BOOK & HUB SYNC                             -->
+    <!-- ======================================================== -->
+    <div id="content-pricing" class="tab-content hidden space-y-6">
+      <!-- Bulk Pricing Change Tool -->
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-emerald-400"></i> Central Price Book Adjustment Engine
+        </h2>
+        <p class="text-xs text-slate-400">Adjust catalog prices centrally, enforce retail rounding rules (.99 or ending in 9), preview changes, and emit atomic XML change files to in-store hubs.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Department</label>
+            <select id="pricingDept" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="">All Departments</option>
+              <option value="10">Produce (10)</option>
+              <option value="11">Meat (11)</option>
+              <option value="20">Grocery (20)</option>
+              <option value="30">Non-Food (30)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Percentage Change (%)</label>
+            <input type="number" id="pricingPct" value="5.0" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Rounding Rule</label>
+            <select id="pricingRule" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+              <option value="ROUND_UP_9">Round up to end in 9 cents (e.g. 4.12 -> 4.19)</option>
+              <option value="ROUND_99">Round up to .99 (e.g. 4.12 -> 4.99)</option>
+              <option value="ROUND_STANDARD">Standard 2-decimal rounding</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button onclick="previewBulkPricing()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 shadow">
+              <i data-lucide="eye" class="w-4 h-4"></i> Preview Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview Results & Publish Action -->
+        <div id="pricingPreviewArea" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <span id="previewStats" class="text-sm font-semibold text-slate-300"></span>
+            <button onclick="commitAndPublishPricing()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg text-sm flex items-center gap-2 shadow">
+              <i data-lucide="send" class="w-4 h-4"></i> Publish XML to In-Store Hubs (Inbox)
+            </button>
+          </div>
+
+          <div class="overflow-x-auto max-h-80 overflow-y-auto border border-slate-700 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="text-slate-400 border-b border-slate-700 bg-slate-800 sticky top-0">
+                <tr>
+                  <th class="py-2 px-3">Item Code</th>
+                  <th class="py-2 px-3">Description</th>
+                  <th class="py-2 px-3">Dept</th>
+                  <th class="py-2 px-3 text-right">Old Price</th>
+                  <th class="py-2 px-3 text-right">New Price</th>
+                  <th class="py-2 px-3 text-right">Change</th>
+                </tr>
+              </thead>
+              <tbody id="pricingPreviewTable" class="divide-y divide-slate-800">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hub Sync Responses (ACK / REJ) -->
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <h2 class="text-lg font-bold text-white flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i data-lucide="activity" class="w-5 h-5 text-sky-400"></i> In-Store Hub Synchronization Status (ACK / REJ Monitor)
+          </span>
+          <button onclick="loadSyncStatus()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700">Refresh Status</button>
+        </h2>
+        <div id="syncStatusList" class="space-y-3">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 5: AI INVOICES & LOSS PREVENTION                     -->
+    <!-- ======================================================== -->
+    <div id="content-ai" class="tab-content hidden space-y-6">
+      <!-- AI Natural Language Assistant (Ask Your Stores) -->
+      <div class="glass-card p-6 rounded-xl space-y-4 bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/30">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <i data-lucide="bot" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-white">Ask Your Stores — AI Operational Assistant</h2>
+            <p class="text-xs text-slate-400">Query cross-store turnover, department anomalies, cashier patterns, and reconciliation</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <input type="text" id="aiQueryInput" placeholder="e.g. Which department had highest sales on Oct 4? Or show cashier void clusters..." class="flex-1 bg-slate-900/90 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+          <button onclick="askAIStoreQuery()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2 shadow">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> Ask
+          </button>
+        </div>
+
+        <div id="aiAnswerCard" class="hidden p-4 rounded-lg bg-slate-900/80 border border-indigo-500/30 text-sm space-y-2">
+          <div class="text-xs text-indigo-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Verified Response
+          </div>
+          <p id="aiAnswerText" class="text-slate-200 leading-relaxed"></p>
+        </div>
+      </div>
+
+      <!-- Supplier Invoices Intelligence (Feature 5A) -->
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="file-text" class="w-5 h-5 text-emerald-400"></i> Supplier Invoice Intelligence & Margin Pricing (5A)
+            </h2>
+            <p class="text-xs text-slate-400">Multimodal extraction of 6 take-home invoices, deterministic math checks, and automated price suggestion</p>
+          </div>
+          <button onclick="loadAIInvoices()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700">Re-Run Benchmark</button>
+        </div>
+
+        <div id="invoicesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Loss Prevention Heuristics & Incident Feed (Feature 5C) -->
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400"></i> Daily Loss Prevention Heuristics & Incident Feed (5C)
+        </h2>
+        <p class="text-xs text-slate-400">Automated detection of cashier void clusters, unauthorized drawer opens, unverified refunds, and shift shortages</p>
+        <div id="lpIncidentsList" class="space-y-3">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 6: QUARANTINE & AUDIT                                -->
+    <!-- ======================================================== -->
+    <div id="content-quarantine" class="tab-content hidden space-y-6">
+      <div class="glass-card p-6 rounded-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="shield-x" class="w-5 h-5 text-red-400"></i> Quarantined Batches & Error Diagnostics
+            </h2>
+            <p class="text-xs text-slate-400">Files isolated due to schema violations, corrupt XML/JSON tokens, or duplicate violations</p>
+          </div>
+          <button onclick="loadQuarantine()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700">Refresh List</button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="text-slate-400 border-b border-slate-700 bg-slate-800/40">
+              <tr>
+                <th class="py-3 px-4">Quarantined At</th>
+                <th class="py-3 px-4">File Name</th>
+                <th class="py-3 px-4">Store</th>
+                <th class="py-3 px-4">Reason</th>
+                <th class="py-3 px-4 text-center">Payload</th>
+              </tr>
+            </thead>
+            <tbody id="quarantineTableBody" class="divide-y divide-slate-800">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal for Receipt Drilldown -->
+  <div id="receiptModal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="receiptModalTitle" class="font-bold text-white text-base">Receipt Detail</h3>
+        <button onclick="closeModal('receiptModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+      </div>
+      <div id="receiptModalBody" class="text-xs space-y-3 font-mono text-slate-300">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Raw Payload View -->
+  <div id="payloadModal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="payloadModalTitle" class="font-bold text-white text-base">File Raw Payload</h3>
+        <button onclick="closeModal('payloadModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+      </div>
+      <pre id="payloadModalBody" class="text-xs bg-slate-950 p-4 rounded-lg overflow-x-auto text-emerald-400 font-mono"></pre>
+    </div>
+  </div>
+
+  <!-- Client-side Logic -->
+  <script>
+    let activeTab = 'overview';
+    let hourlyChart = null;
+    let tendersChart = null;
+    let pendingPriceUpdates = [];
+
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    function setSampleDate(dt) {
+      document.getElementById('dateSelect').value = dt;
+      loadActiveTabData();
+    }
+
+    function switchTab(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-600', 'text-white', 'shadow');
+        btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
+      });
+      document.getElementById(`tab-${tabId}`).classList.add('bg-emerald-600', 'text-white', 'shadow');
+      document.getElementById(`tab-${tabId}`).classList.remove('text-slate-400', 'hover:bg-slate-800');
+
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`content-${tabId}`).classList.remove('hidden');
+
+      loadActiveTabData();
+    }
+
+    function loadActiveTabData() {
+      const store = document.getElementById('storeSelect').value;
+      const date = document.getElementById('dateSelect').value;
+
+      if (activeTab === 'overview') loadOverview(store, date);
+      else if (activeTab === 'reconciliation') loadReconciliation(store, date);
+      else if (activeTab === 'transactions') loadTransactions();
+      else if (activeTab === 'pricing') loadSyncStatus();
+      else if (activeTab === 'ai') { loadAIInvoices(); loadLossPrevention(store, date); }
+      else if (activeTab === 'quarantine') loadQuarantine();
+    }
+
+    // 1. OVERVIEW
+    async function loadOverview(store, date) {
+      try {
+        const storeParam = store === 'ALL' ? '' : `&store_id=${store}`;
+        const res = await fetch(`/api/v1/dashboard/daily?date=${date}${storeParam}`);
+        const data = await res.json();
+
+        // Update KPIs
+        document.getElementById('kpiTotalSales').innerText = `$${data.headline.total_sales.toFixed(2)}`;
+        document.getElementById('kpiCounterShare').innerText = `Counter: $${data.headline.counter_sales.toFixed(2)}`;
+        document.getElementById('kpiScoShare').innerText = `SCO: $${data.headline.self_checkout_sales.toFixed(2)}`;
+        document.getElementById('kpiTxCount').innerText = data.headline.transaction_count;
+        document.getElementById('kpiAvgBasket').innerText = `$${data.headline.average_basket.toFixed(2)}`;
+        document.getElementById('kpiGiftCard').innerText = `$${data.headline.gift_card_loads.toFixed(2)}`;
+
+        // Departments Table
+        const deptTbody = document.getElementById('departmentsTableBody');
+        deptTbody.innerHTML = '';
+        data.departments_breakdown.forEach(d => {
+          deptTbody.innerHTML += `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-2.5 px-3 font-semibold text-slate-200">Dept ${d.dept}</td>
+              <td class="py-2.5 px-3 text-slate-400">${d.item_count} items</td>
+              <td class="py-2.5 px-3 text-right font-bold text-emerald-400">$${d.total_sales.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+
+        // Watch List Feed
+        const watchFeed = document.getElementById('watchListFeed');
+        watchFeed.innerHTML = '';
+        document.getElementById('watchListCount').innerText = `${data.watch_list.length} events`;
+        if (data.watch_list.length === 0) {
+          watchFeed.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">No exception events logged.</div>';
+        } else {
+          data.watch_list.forEach(w => {
+            watchFeed.innerHTML += `
+              <div class="p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/60 flex items-center justify-between text-xs">
+                <div>
+                  <div class="font-medium text-slate-200 flex items-center gap-1.5">
+                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-300 font-bold">${w.type}</span>
+                    <span>${w.reason}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">Seq: ${w.seq} • Till: ${w.device_id || 'N/A'} • Cashier: ${w.staff_id || 'N/A'} • ${w.time}</div>
+                </div>
+                <div class="font-bold text-slate-200">$${w.amount.toFixed(2)}</div>
+              </div>
+            `;
+          });
+        }
+
+        // Render Charts
+        renderHourlyChart(data.sales_by_hour);
+        renderTendersChart(data.tenders_breakdown);
+
+      } catch (err) {
+        console.error("Failed to load overview:", err);
+      }
+    }
+
+    function renderHourlyChart(hoursData) {
+      const ctx = document.getElementById('hourlySalesChart').getContext('2d');
+      if (hourlyChart) hourlyChart.destroy();
+      hourlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: hoursData.map(h => h.hour),
+          datasets: [{
+            label: 'Sales ($)',
+            data: hoursData.map(h => h.sales),
+            backgroundColor: '#10b981',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#94a3b8' } },
+            y: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    function renderTendersChart(tendersData) {
+      const ctx = document.getElementById('tendersChart').getContext('2d');
+      if (tendersChart) tendersChart.destroy();
+      tendersChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: tendersData.map(t => t.tender_type),
+          datasets: [{
+            data: tendersData.map(t => t.total_amount),
+            backgroundColor: ['#10b981', '#38bdf8', '#818cf8', '#c084fc', '#f59e0b']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12 } } }
+        }
+      });
+    }
+
+    // 2. RECONCILIATION
+    async function loadReconciliation(store, date) {
+      const storeId = (store === 'ALL') ? 'BL01' : store;
+      try {
+        const eodRes = await fetch(`/api/v1/reconciliation/daily?store_id=${storeId}&date=${date}`);
+        const eod = await eodRes.json();
+
+        // Status Badge
+        const badge = document.getElementById('eodStatusBadge');
+        badge.innerText = eod.status;
+        badge.className = `text-sm font-bold px-3 py-1.5 rounded-full ${eod.status === 'MATCHED' ? 'badge-matched' : eod.status === 'MISMATCH' ? 'badge-mismatch' : 'badge-review'}`;
+
+        // Root cause banner
+        const rcBanner = document.getElementById('rootCauseBanner');
+        const rcText = document.getElementById('rootCauseText');
+        rcText.innerText = eod.root_cause_analysis || "All raw transaction sums exactly match stated totals.";
+        if (eod.status === 'MATCHED') {
+          rcBanner.className = "p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-3";
+        } else {
+          rcBanner.className = "p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3";
+        }
+
+        // Comparison Table
+        const d = eod.comparison_details;
+        const eodTbody = document.getElementById('eodComparisonTable');
+        eodTbody.innerHTML = `
+          <tr>
+            <td class="py-3 px-4 font-medium text-slate-200">Net Sales</td>
+            <td class="py-3 px-4 text-right font-mono">$${d.ground_truth.net_sales.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right font-mono">$${d.stated_summary.net_sales.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold ${eod.net_sales_diff !== 0 ? 'text-red-400' : 'text-emerald-400'}">$${eod.net_sales_diff.toFixed(2)}</td>
+            <td class="py-3 px-4 text-center"><span class="px-2 py-0.5 rounded text-xs ${eod.net_sales_diff === 0 ? 'badge-matched' : 'badge-mismatch'}">${eod.net_sales_diff === 0 ? 'MATCH' : 'DIFF'}</span></td>
+          </tr>
+          <tr>
+            <td class="py-3 px-4 font-medium text-slate-200">Tax Amount</td>
+            <td class="py-3 px-4 text-right font-mono">$${d.ground_truth.tax_amount.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right font-mono">$${d.stated_summary.tax_amount.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold ${eod.tax_diff !== 0 ? 'text-red-400' : 'text-emerald-400'}">$${eod.tax_diff.toFixed(2)}</td>
+            <td class="py-3 px-4 text-center"><span class="px-2 py-0.5 rounded text-xs ${eod.tax_diff === 0 ? 'badge-matched' : 'badge-mismatch'}">${eod.tax_diff === 0 ? 'MATCH' : 'DIFF'}</span></td>
+          </tr>
+          <tr>
+            <td class="py-3 px-4 font-medium text-slate-200">Grand Total</td>
+            <td class="py-3 px-4 text-right font-mono font-bold">$${d.ground_truth.grand_total.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold">$${d.stated_summary.grand_total.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold ${eod.grand_total_diff !== 0 ? 'text-red-400' : 'text-emerald-400'}">$${eod.grand_total_diff.toFixed(2)}</td>
+            <td class="py-3 px-4 text-center"><span class="px-2 py-0.5 rounded text-xs ${eod.grand_total_diff === 0 ? 'badge-matched' : 'badge-mismatch'}">${eod.grand_total_diff === 0 ? 'MATCH' : 'DIFF'}</span></td>
+          </tr>
+        `;
+
+        // Shift Reconciliations
+        const shiftRes = await fetch(`/api/v1/reconciliation/shifts?store_id=${storeId}&date=${date}`);
+        const shifts = await shiftRes.json();
+        const shiftTbody = document.getElementById('shiftComparisonTable');
+        shiftTbody.innerHTML = '';
+        if (shifts.length === 0) {
+          shiftTbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-xs text-slate-500">No shift close records for this store/date.</td></tr>';
+        } else {
+          shifts.forEach(s => {
+            const exp = s.details.expected_cash || 0;
+            const act = s.closing_cash || 0;
+            const diff = s.cash_diff || 0;
+            shiftTbody.innerHTML += `
+              <tr class="hover:bg-slate-800/40">
+                <td class="py-3 px-4 font-mono font-semibold text-slate-200">${s.shift_id}</td>
+                <td class="py-3 px-4 text-slate-400">${s.device_id} (${s.staff_id})</td>
+                <td class="py-3 px-4 text-right font-mono">$${s.opening_float.toFixed(2)}</td>
+                <td class="py-3 px-4 text-right font-mono font-semibold">$${exp.toFixed(2)}</td>
+                <td class="py-3 px-4 text-right font-mono font-semibold">$${act.toFixed(2)}</td>
+                <td class="py-3 px-4 text-right font-mono font-bold ${diff !== 0 ? 'text-amber-400' : 'text-emerald-400'}">$${diff.toFixed(2)}</td>
+                <td class="py-3 px-4 text-center">
+                  <span class="px-2 py-0.5 rounded text-xs ${s.status === 'MATCHED' ? 'badge-matched' : 'badge-review'}">${s.status}</span>
+                </td>
+              </tr>
+            `;
+          });
+        }
+
+      } catch (err) {
+        console.error("Reconciliation fetch error:", err);
+      }
+    }
+
+    // 3. TRANSACTIONS
+    async function loadTransactions() {
+      const store = document.getElementById('storeSelect').value;
+      const date = document.getElementById('dateSelect').value;
+      const type = document.getElementById('txFilterType').value;
+      const tender = document.getElementById('txFilterTender').value;
+      const voidFilter = document.getElementById('txFilterVoid').value;
+
+      let url = `/api/v1/transactions?date=${date}&limit=50`;
+      if (store !== 'ALL') url += `&store_id=${store}`;
+      if (type) url += `&type=${type}`;
+      if (tender) url += `&tender_type=${tender}`;
+      if (voidFilter === 'true') url += `&has_voids=true`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const tbody = document.getElementById('transactionsTableBody');
+        tbody.innerHTML = '';
+
+        if (data.items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="py-6 text-center text-xs text-slate-500">No transactions matching filter criteria.</td></tr>';
+          return;
+        }
+
+        data.items.forEach(tx => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-2.5 px-4 font-mono font-semibold text-slate-300">#${tx.seq}</td>
+              <td class="py-2.5 px-4 text-slate-400">${tx.start_time || 'N/A'}</td>
+              <td class="py-2.5 px-4 text-slate-300">${tx.store_id}</td>
+              <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-200 font-semibold">${tx.type}</span></td>
+              <td class="py-2.5 px-4 text-slate-400">${tx.device_id || 'N/A'}</td>
+              <td class="py-2.5 px-4 text-slate-400">${tx.staff_id || 'N/A'}</td>
+              <td class="py-2.5 px-4 text-center">
+                <span>${tx.item_count}</span>
+                ${tx.void_count > 0 ? `<span class="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-red-500/20 text-red-400 font-bold">${tx.void_count} void</span>` : ''}
+              </td>
+              <td class="py-2.5 px-4 text-right font-mono font-bold text-slate-200">$${tx.grand_total.toFixed(2)}</td>
+              <td class="py-2.5 px-4 text-center">
+                <button onclick="viewReceipt(${tx.id})" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Receipt</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error("Transactions load error:", err);
+      }
+    }
+
+    async function viewReceipt(txId) {
+      try {
+        const res = await fetch(`/api/v1/transactions/${txId}`);
+        const tx = await res.json();
+
+        document.getElementById('receiptModalTitle').innerText = `Receipt — ${tx.store_id} Seq #${tx.seq} (${tx.type})`;
+        let html = `
+          <div class="border-b border-slate-700 pb-2">
+            <div>STORE: ${tx.store_id} | DATE: ${tx.business_date} ${tx.start_time}</div>
+            <div>TILL: ${tx.device_id} | OPERATOR: ${tx.staff_id} | SHIFT: ${tx.shift || 'N/A'}</div>
+          </div>
+          <div class="py-2 space-y-1">
+        `;
+
+        tx.lines.forEach(l => {
+          html += `
+            <div class="flex justify-between items-center ${l.is_void ? 'line-through text-red-400' : 'text-slate-200'}">
+              <span>${l.description || l.item_code} (x${l.qty})</span>
+              <span>$${l.amount.toFixed(2)}</span>
+            </div>
+          `;
+        });
+
+        html += `
+          </div>
+          <div class="border-t border-slate-700 pt-2 space-y-1">
+            <div class="flex justify-between font-semibold"><span>SUBTOTAL</span><span>$${tx.net_amount.toFixed(2)}</span></div>
+            <div class="flex justify-between font-semibold"><span>TAX</span><span>$${tx.tax_amount.toFixed(2)}</span></div>
+            <div class="flex justify-between text-base font-bold text-emerald-400"><span>TOTAL</span><span>$${tx.grand_total.toFixed(2)}</span></div>
+          </div>
+          <div class="border-t border-slate-700 pt-2">
+            <span class="text-slate-400">TENDERS:</span>
+            ${tx.tenders.map(t => `<div class="flex justify-between"><span>${t.tender_type}</span><span>$${t.amount.toFixed(2)}</span></div>`).join('')}
+          </div>
+        `;
+
+        document.getElementById('receiptModalBody').innerHTML = html;
+        document.getElementById('receiptModal').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 4. PRICE BOOK & HUB SYNC
+    async function previewBulkPricing() {
+      const dept = document.getElementById('pricingDept').value;
+      const pct = parseFloat(document.getElementById('pricingPct').value) || 5.0;
+      const rule = document.getElementById('pricingRule').value;
+
+      try {
+        const res = await fetch('/api/v1/pricing/preview-bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pct_change: pct, dept: dept || null, rounding_rule: rule })
+        });
+        const data = await res.json();
+        pendingPriceUpdates = data.preview;
+
+        document.getElementById('previewStats').innerText = `Previewing ${data.items_affected} items (${pct > 0 ? '+' : ''}${pct}% adjustment)`;
+        const tbody = document.getElementById('pricingPreviewTable');
+        tbody.innerHTML = '';
+        data.preview.slice(0, 50).forEach(itm => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-2 px-3 font-mono font-semibold text-slate-300">${itm.item_code}</td>
+              <td class="py-2 px-3 text-slate-200">${itm.description}</td>
+              <td class="py-2 px-3 text-slate-400">${itm.dept}</td>
+              <td class="py-2 px-3 text-right font-mono text-slate-400">$${itm.old_price.toFixed(2)}</td>
+              <td class="py-2 px-3 text-right font-mono font-bold text-emerald-400">$${itm.new_price.toFixed(2)}</td>
+              <td class="py-2 px-3 text-right font-mono text-indigo-400">+$${itm.diff.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+        document.getElementById('pricingPreviewArea').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function commitAndPublishPricing() {
+      if (pendingPriceUpdates.length === 0) return;
+      try {
+        const res = await fetch('/api/v1/pricing/apply-and-publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pendingPriceUpdates)
+        });
+        const data = await res.json();
+        alert(`Success! Updated ${data.updated_count} items and published XML change files to store inboxes.`);
+        loadSyncStatus();
+      } catch (err) {
+        alert("Failed to publish price change: " + err);
+      }
+    }
+
+    async function loadSyncStatus() {
+      try {
+        const res = await fetch('/api/v1/pricing/sync-status');
+        const data = await res.json();
+        const container = document.getElementById('syncStatusList');
+        container.innerHTML = '';
+        if (data.results.length === 0) {
+          container.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">No recent hub synchronization events in outbox/.</div>';
+        } else {
+          data.results.forEach(r => {
+            const isRej = r.status === 'REJECTED';
+            container.innerHTML += `
+              <div class="p-3 rounded-lg bg-slate-800/40 border border-slate-700/60 flex items-center justify-between text-xs">
+                <div>
+                  <div class="font-bold flex items-center gap-2 ${isRej ? 'text-red-400' : 'text-emerald-400'}">
+                    <span>${r.file_name}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] ${isRej ? 'badge-mismatch' : 'badge-matched'}">${r.status}</span>
+                  </div>
+                  <div class="text-slate-400 mt-1">Change ID: ${r.change_id} • Store: ${r.store_id} • Processed: ${r.processed_at}</div>
+                  ${r.message ? `<div class="text-amber-400 mt-1">Error [${r.error_code}]: ${r.message}</div>` : ''}
+                </div>
+              </div>
+            `;
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 5. AI FEATURES
+    async function loadAIInvoices() {
+      try {
+        const res = await fetch('/api/v1/ai/invoices');
+        const data = await res.json();
+        const grid = document.getElementById('invoicesGrid');
+        grid.innerHTML = '';
+
+        data.results.forEach(inv => {
+          const isFlagged = inv.status !== 'VERIFIED_MATCH';
+          grid.innerHTML += `
+            <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white text-sm">${inv.supplier}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isFlagged ? 'badge-review' : 'badge-matched'}">${inv.status}</span>
+              </div>
+              <div class="text-xs text-slate-400">
+                <div>Invoice No: <span class="text-slate-200 font-mono">${inv.invoice_no}</span></div>
+                <div>File: ${inv.file_name} (${inv.lines_count} lines)</div>
+              </div>
+              <div class="p-2 rounded bg-slate-900/60 text-[11px] text-slate-300 border border-slate-800">
+                ${inv.discrepancy_details}
+              </div>
+              <button onclick="publishInvoicePrice('${inv.file_name}')" class="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-semibold py-1.5 rounded-lg text-xs flex items-center justify-center gap-1.5">
+                <i data-lucide="tag" class="w-3.5 h-3.5"></i> Sync 35% Margin to Hub
+              </button>
+            </div>
+          `;
+        });
+        lucide.createIcons();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function publishInvoicePrice(filename) {
+      try {
+        const res = await fetch(`/api/v1/ai/invoices/${filename}/publish-pricing`, { method: 'POST' });
+        const data = await res.json();
+        alert(`Success! Updated ${data.items_updated} items with 35% target margin pricing.`);
+        loadSyncStatus();
+      } catch (err) {
+        alert("Failed to sync invoice pricing: " + err);
+      }
+    }
+
+    async function loadLossPrevention(store, date) {
+      const storeParam = store === 'ALL' ? '' : `&store_id=${store}`;
+      try {
+        const res = await fetch(`/api/v1/ai/loss-prevention?date=${date}${storeParam}`);
+        const data = await res.json();
+        const list = document.getElementById('lpIncidentsList');
+        list.innerHTML = '';
+
+        if (data.incidents.length === 0) {
+          list.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">No loss prevention incidents or cashier anomalies detected for this date.</div>';
+          return;
+        }
+
+        data.incidents.forEach(inc => {
+          const isHigh = inc.severity === 'HIGH';
+          list.innerHTML += `
+            <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-700/80 flex items-start justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isHigh ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">${inc.severity}</span>
+                  <span class="font-bold text-slate-200 text-sm">${inc.headline}</span>
+                </div>
+                <p class="text-xs text-slate-400">${inc.details}</p>
+                <div class="text-[11px] text-emerald-400 font-medium">💡 Recommendation: ${inc.recommended_action}</div>
+              </div>
+              <div class="text-right text-xs text-slate-400 whitespace-nowrap">
+                <div>Store: ${inc.store_id}</div>
+                <div>Cashier: ${inc.staff_id || 'N/A'}</div>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function askAIStoreQuery() {
+      const q = document.getElementById('aiQueryInput').value.trim();
+      if (!q) return;
+      const store = document.getElementById('storeSelect').value;
+      const date = document.getElementById('dateSelect').value;
+
+      try {
+        const res = await fetch('/api/v1/ai/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q, store_id: store === 'ALL' ? null : store, date: date })
+        });
+        const data = await res.json();
+        document.getElementById('aiAnswerText').innerText = data.answer;
+        document.getElementById('aiAnswerCard').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 6. QUARANTINE
+    async function loadQuarantine() {
+      try {
+        const res = await fetch('/api/v1/quarantine');
+        const data = await res.json();
+        const tbody = document.getElementById('quarantineTableBody');
+        tbody.innerHTML = '';
+
+        if (data.items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-slate-500">No quarantined files on record.</td></tr>';
+          return;
+        }
+
+        data.items.forEach(f => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-3 px-4 text-slate-400 text-xs">${f.quarantined_at || 'N/A'}</td>
+              <td class="py-3 px-4 font-mono font-bold text-red-400">${f.file_name}</td>
+              <td class="py-3 px-4 text-slate-300">${f.store_id || 'N/A'}</td>
+              <td class="py-3 px-4 text-slate-300 text-xs">${f.quarantine_reason}</td>
+              <td class="py-3 px-4 text-center">
+                <button onclick="viewPayload(${f.id})" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">Inspect</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function viewPayload(id) {
+      try {
+        const res = await fetch(`/api/v1/quarantine/${id}`);
+        const f = await res.json();
+        document.getElementById('payloadModalTitle').innerText = `Quarantine Payload: ${f.file_name}`;
+        document.getElementById('payloadModalBody').innerText = f.raw_payload;
+        document.getElementById('payloadModal').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadActiveTabData();
+    });
+  </script>
+</body>
+</html>
